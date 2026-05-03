@@ -15,12 +15,12 @@ KITE_PASSWORD = os.getenv("KITE_PASSWORD", "")
 KITE_TOTP_SECRET = os.getenv("KITE_TOTP_SECRET", "")
 
 # --- Capital & risk ---
-SEED_CAPITAL = float(os.getenv("SEED_CAPITAL", "1000.0"))
-RISK_PER_TRADE_PCT = float(os.getenv("RISK_PER_TRADE_PCT", "0.25"))
-MAX_OPEN_POSITIONS = int(os.getenv("MAX_OPEN_POSITIONS", "3"))
-MAX_DAILY_LOSS_PCT = float(os.getenv("MAX_DAILY_LOSS_PCT", "0.04"))
-PROFIT_LOCK_PCT = float(os.getenv("PROFIT_LOCK_PCT", "0.08"))
-MIS_LEVERAGE = int(os.getenv("MIS_LEVERAGE", "3"))
+SEED_CAPITAL = float(os.getenv("SEED_CAPITAL", "5000.0"))
+RISK_PER_TRADE_PCT = float(os.getenv("RISK_PER_TRADE_PCT", "0.02"))
+MAX_OPEN_POSITIONS = int(os.getenv("MAX_OPEN_POSITIONS", "2"))
+MAX_DAILY_LOSS_PCT = float(os.getenv("MAX_DAILY_LOSS_PCT", "0.05"))
+PROFIT_LOCK_PCT = float(os.getenv("PROFIT_LOCK_PCT", "0.10"))
+MIS_LEVERAGE = int(os.getenv("MIS_LEVERAGE", "5"))
 
 # Recovery mode: if yesterday ended in a loss, bump risk allocation
 # Effective recovery risk = RISK_PER_TRADE_PCT * RECOVERY_RISK_MULTIPLIER
