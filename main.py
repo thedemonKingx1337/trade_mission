@@ -13,8 +13,8 @@ import colorlog
 
 from config.settings import (
     IST, DRY_RUN, LOG_LEVEL, LOG_DIR, NSE_HOLIDAYS,
-    MAX_OPEN_POSITIONS, LAST_ENTRY_TIME, ANTHROPIC_API_KEY,
-    RISK_PER_TRADE_PCT, NEWS_FETCH_ENABLED,
+    MAX_OPEN_POSITIONS, LAST_ENTRY_TIME, ACTIVE_AI_BRAIN,
+    ANTHROPIC_API_KEY, GEMINI_API_KEY, RISK_PER_TRADE_PCT, NEWS_FETCH_ENABLED,
     PARTIAL_PROFIT_ENABLED, PARTIAL_PROFIT_RATIO,
     PARTIAL_TARGET_ATR_MULT,
 )
@@ -37,7 +37,7 @@ from ledger.tracker import (
     get_adaptive_risk_pct,
 )
 from utils.correlation_filter import filter_correlated
-from ai.claude_brain import get_trade_signals, get_position_advice
+from ai import claude_brain, gemini_brain
 
 # ── Globals ───────────────────────────────────────────────────────────────────
 _kite           = None
@@ -52,13 +52,13 @@ _entries_stopped = False
 _eod_done        = False
 _shutdown_done   = False
 
-# Claude AI state
-_claude_signals:   list  = []   # pre-fetched signals from Claude at 09:15
+# AI state
+_ai_signals:       list  = []   # pre-fetched signals from AI at 09:15
 _premarket_ctx:    dict  = {}   # pre-market context for the day
 _market_ctx:       dict  = {}   # Nifty/VIX context for the day
 _market_intel:     dict  = {}   # news headlines + events calendar
 _adaptive_risk:    float = RISK_PER_TRADE_PCT  # adjusted risk per trade
-_monitor_ai_tick:  int   = 0    # counts monitor cycles; Claude advice every 5
+_monitor_ai_tick:  int   = 0    # counts monitor cycles; AI advice every 5
 
 # ── Logging ───────────────────────────────────────────────────────────────────
 
@@ -153,7 +153,7 @@ def job_premarket():
 
 def job_market_open():
     global _universe_df, _strategy_name, _strategy_config
-    global _claude_signals, _premarket_ctx, _market_ctx, _market_intel, _adaptive_risk
+    global _ai_signals, _premarket_ctx, _market_ctx, _market_intel, _adaptive_risk
 
     if not is_trading_day() or _kite is None:
         return
@@ -201,38 +201,46 @@ def job_market_open():
     else:
         logger.info(f"Rule-based strategy locked: {_strategy_name.upper()}")
 
-    # ── Claude AI brain (with market intelligence) ─────────────────────────
-    if ANTHROPIC_API_KEY:
-        logger.info("Calling Claude AI for trade decisions (with news + events)...")
-        try:
-            ai_strategy, ai_signals = get_trade_signals(
+    # ── AI brain (with market intelligence) ─────────────────────────
+    try:
+        ai_strategy, ai_signals = "skip", []
+        if ACTIVE_AI_BRAIN == "gemini" and GEMINI_API_KEY:
+            logger.info("Calling Gemini AI for trade decisions (with news + events)...")
+            ai_strategy, ai_signals = gemini_brain.get_trade_signals(
                 _kite, _universe_df, _daily_capital, _conn,
                 _premarket_ctx, _market_ctx, _market_intel,
             )
-            if ai_signals:
-                # Apply sector correlation filter
-                ai_signals = filter_correlated(ai_signals, _open_trades)
-                _claude_signals = ai_signals
-                _strategy_name  = ai_strategy
-                logger.info(
-                    f"Claude AI strategy: {ai_strategy.upper()} — "
-                    f"{len(ai_signals)} signal(s) queued (after correlation filter)"
-                )
-                for s in ai_signals:
-                    logger.info(
-                        f"  ↳ {s['symbol']} entry={s['entry_price']} "
-                        f"SL={s['stop_loss']} target={s['target_price']} — {s['rationale']}"
-                    )
-            elif ai_strategy == "skip":
-                logger.warning("Claude AI recommends SKIP today — using rule-based fallback")
-            else:
-                logger.info("Claude AI found no signals — rule-based will scan at entry windows")
-        except Exception as e:
-            logger.error(f"Claude AI call failed: {e} — using rule-based signals")
-    else:
-        logger.info("No ANTHROPIC_API_KEY set — using rule-based strategy only")
+        elif ACTIVE_AI_BRAIN == "claude" and ANTHROPIC_API_KEY:
+            logger.info("Calling Claude AI for trade decisions (with news + events)...")
+            ai_strategy, ai_signals = claude_brain.get_trade_signals(
+                _kite, _universe_df, _daily_capital, _conn,
+                _premarket_ctx, _market_ctx, _market_intel,
+            )
+        else:
+            logger.info(f"No API key set for {ACTIVE_AI_BRAIN} — using rule-based strategy only")
 
-    # Write final strategy to DB (after potential Claude override)
+        if ai_signals:
+            # Apply sector correlation filter
+            ai_signals = filter_correlated(ai_signals, _open_trades)
+            _ai_signals = ai_signals
+            _strategy_name  = ai_strategy
+            logger.info(
+                f"{ACTIVE_AI_BRAIN.capitalize()} AI strategy: {ai_strategy.upper()} — "
+                f"{len(ai_signals)} signal(s) queued (after correlation filter)"
+            )
+            for s in ai_signals:
+                logger.info(
+                    f"  ↳ {s['symbol']} entry={s['entry_price']} "
+                    f"SL={s['stop_loss']} target={s['target_price']} — {s['rationale']}"
+                )
+        elif ai_strategy == "skip" and (GEMINI_API_KEY if ACTIVE_AI_BRAIN == "gemini" else ANTHROPIC_API_KEY):
+            logger.warning(f"{ACTIVE_AI_BRAIN.capitalize()} AI recommends SKIP today — using rule-based fallback")
+        elif (GEMINI_API_KEY if ACTIVE_AI_BRAIN == "gemini" else ANTHROPIC_API_KEY):
+            logger.info(f"{ACTIVE_AI_BRAIN.capitalize()} AI found no signals — rule-based will scan at entry windows")
+    except Exception as e:
+        logger.error(f"AI call failed: {e} — using rule-based signals")
+
+    # Write final strategy to DB (after potential AI override)
     if _conn:
         try:
             _conn.execute(
@@ -246,7 +254,7 @@ def job_market_open():
 
 def job_entry_scan():
     global _open_trades, _entries_stopped, _universe_df, _strategy_name, _strategy_config
-    global _claude_signals
+    global _ai_signals
 
     if not is_trading_day() or _kite is None:
         return
@@ -266,11 +274,11 @@ def job_entry_scan():
 
     remaining_slots = max_pos - len(_open_trades)
 
-    # ── Claude AI signals (use first, if available) ────────────────────────
-    if _claude_signals:
-        logger.info(f"Executing {min(len(_claude_signals), remaining_slots)} Claude AI signal(s)")
-        signals_to_place = _claude_signals[:remaining_slots]
-        _claude_signals  = _claude_signals[remaining_slots:]   # consume used slots
+    # ── AI signals (use first, if available) ────────────────────────
+    if _ai_signals:
+        logger.info(f"Executing {min(len(_ai_signals), remaining_slots)} AI signal(s)")
+        signals_to_place = _ai_signals[:remaining_slots]
+        _ai_signals  = _ai_signals[remaining_slots:]   # consume used slots
         for signal in signals_to_place:
             if len(_open_trades) >= max_pos:
                 break
@@ -431,9 +439,11 @@ def job_monitor():
         _trigger_emergency_close("PROFIT_LOCK")
         return
 
-    # Step 3: Claude AI position advice (every 5 monitor cycles = ~5 min)
+    # Step 3: AI position advice (every 5 monitor cycles = ~5 min)
     _monitor_ai_tick += 1
-    if ANTHROPIC_API_KEY and _open_trades and _monitor_ai_tick % 5 == 0:
+    ai_key_exists = (GEMINI_API_KEY if ACTIVE_AI_BRAIN == "gemini" else ANTHROPIC_API_KEY)
+
+    if ai_key_exists and _open_trades and _monitor_ai_tick % 5 == 0:
         try:
             current_market_ctx = dict(_market_ctx)
             try:
@@ -441,9 +451,15 @@ def job_monitor():
             except Exception:
                 pass
 
-            advice = get_position_advice(
-                _kite, _open_trades, _daily_capital, _realized_pnl, current_market_ctx,
-            )
+            if ACTIVE_AI_BRAIN == "gemini":
+                advice = gemini_brain.get_position_advice(
+                    _kite, _open_trades, _daily_capital, _realized_pnl, current_market_ctx,
+                )
+            else:
+                advice = claude_brain.get_position_advice(
+                    _kite, _open_trades, _daily_capital, _realized_pnl, current_market_ctx,
+                )
+                
             for action in advice:
                 trade_id = action["trade_id"]
                 act      = action["action"]
@@ -455,7 +471,7 @@ def job_monitor():
 
                 if act == "exit_now":
                     logger.warning(
-                        f"Claude AI: exit {trade['symbol']} now — {reason}"
+                        f"{ACTIVE_AI_BRAIN.capitalize()} AI: exit {trade['symbol']} now — {reason}"
                     )
                     place_market_sell(_kite, trade["symbol"], trade["quantity"], DRY_RUN)
                     pnl = record_trade_exit(
@@ -469,7 +485,7 @@ def job_monitor():
 
                 elif act in ("tighten_sl", "trail_sl") and new_sl:
                     logger.info(
-                        f"Claude AI: tighten SL {trade['symbol']} "
+                        f"{ACTIVE_AI_BRAIN.capitalize()} AI: tighten SL {trade['symbol']} "
                         f"{trade['stop_loss']:.2f} → {new_sl:.2f} — {reason}"
                     )
                     modify_sl_order(
@@ -478,7 +494,7 @@ def job_monitor():
                     _open_trades[trade_id]["stop_loss"] = new_sl
 
         except Exception as e:
-            logger.error(f"Claude AI position advice error: {e}")
+            logger.error(f"{ACTIVE_AI_BRAIN.capitalize()} AI position advice error: {e}")
 
 
 def _trigger_emergency_close(reason: str):

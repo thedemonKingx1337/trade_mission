@@ -35,7 +35,7 @@
 | Capital model | ₹1000 one-time seed on first Monday; profits compound daily Mon–Fri |
 | Trading style | Intraday only — MIS product, long-only, all positions closed by 15:15 IST |
 | Safety default | `DRY_RUN=true` in `.env` — no real orders until set to `false` |
-| AI Brain | Claude API (Opus for entry, Sonnet for monitoring). Falls back to rule-based if key missing. |
+| AI Brain | Multi-model support: Google Gemini (Pro/Flash) or Anthropic Claude (Opus/Sonnet). Set `ACTIVE_AI_BRAIN` in `.env`. Falls back to rule-based if key missing. |
 
 **Capital compounding model:**
 - First Monday ever: seed ₹1000 (only time seed is used)
@@ -77,7 +77,8 @@ trade_mission/
 │   └── kite_auth.py            Daily login + token persistence. Token expires at midnight IST.
 │
 ├── ai/
-│   └── claude_brain.py         Claude API brain. Morning trade decisions + mid-session position advice.
+│   ├── claude_brain.py         Claude API brain. Morning trade decisions + mid-session position advice.
+│   └── gemini_brain.py         Gemini API brain. Same responsibilities, selected via ACTIVE_AI_BRAIN.
 │                               Falls back silently to rule-based if API key missing or call fails.
 │
 ├── data/
@@ -123,13 +124,13 @@ trade_mission/
 |---|---|---|
 | 08:45 | (manual) | Run `python main.py`, complete browser login, paste `request_token` |
 | 09:00 | `job_premarket` | Authenticate Kite, init DB, load capital, reconcile yesterday |
-| 09:15 | `job_market_open` | Filter universe, fetch market intelligence (news+events), compute adaptive risk, run `select_strategy()`, get Claude trade signals |
-| 09:25 | `job_entry_scan` | First entry — executes Claude signals or falls back to rule-based, places orders, applies correlation filter |
+| 09:15 | `job_market_open` | Filter universe, fetch market intelligence (news+events), compute adaptive risk, run `select_strategy()`, get AI trade signals |
+| 09:25 | `job_entry_scan` | First entry — executes AI signals or falls back to rule-based, places orders, applies correlation filter |
 | 09:30 | `job_entry_scan` | Repeat — fill remaining slots |
 | 09:45 | `job_entry_scan` | Repeat (range strategy eligible from here — needs 30 min data) |
 | 10:00 | `job_entry_scan` | Repeat |
 | 10:15 | `job_entry_scan` | **Final entry.** No new entries after this time. |
-| Every 60s | `job_monitor` | Trail SL, time-decay SL, check partial profit fills, kill-switch, profit-lock. Every 5 mins: Claude position advice |
+| Every 60s | `job_monitor` | Trail SL, time-decay SL, check partial profit fills, kill-switch, profit-lock. Every 5 mins: AI position advice |
 | 15:15 | `job_eod_close` | Cancel all orders → MARKET SELL all open MIS positions |
 | 15:30 | `job_shutdown` | EOD compound, print daily summary, close DB, exit |
 
@@ -162,7 +163,7 @@ trade_mission/
 
 10. **Recovery mode is automatic.** Detected by `is_recovery_mode(conn)` in `tracker.py`. Applied in `select_strategy`. Parameters in `settings.py`. Do not hardcode recovery behaviour elsewhere.
 
-11. **Claude API Fallback.** If `ANTHROPIC_API_KEY` is missing or the API call fails, the bot MUST silently fall back to rule-based execution. No crashes allowed.
+11. **AI API Fallback.** If the selected API key (`GEMINI_API_KEY` or `ANTHROPIC_API_KEY`) is missing or the API call fails, the bot MUST silently fall back to rule-based execution. No crashes allowed.
 
 12. **Profit Boosters.** The system enforces 5 profit boosters dynamically:
     - **Partial Profit Booking:** 50% booked at 1x ATR, remaining rides to 2x ATR with SL at breakeven (`order_manager`).

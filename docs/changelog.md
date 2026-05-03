@@ -7,6 +7,32 @@
 
 ---
 
+### v1.5 — 2026-05-03 — Claude Opus 4.6 (Thinking)
+
+**Added — Multi-Brain Architecture (Gemini + Claude):**
+- `ai/gemini_brain.py` — NEW module. Google Gemini AI brain with identical public API to `claude_brain.py`:
+  - `get_trade_signals()` — calls `gemini-2.5-pro` with structured JSON output (Pydantic schemas: `TradeDecisions`, `Trade`). Same market briefing, validation, and fallback as Claude brain.
+  - `get_position_advice()` — calls `gemini-2.5-flash` for fast mid-session position management. Same hold/exit/tighten/trail actions.
+  - Uses `google.generativeai` SDK with `response_mime_type="application/json"` and `response_schema` for structured output (no tool_use needed — Gemini handles this natively).
+- `ACTIVE_AI_BRAIN` setting in `config/settings.py` — set to `"gemini"` or `"claude"` in `.env`. Default: `"gemini"` (free tier available).
+- `GEMINI_API_KEY`, `GEMINI_TRADE_MODEL`, `GEMINI_MONITOR_MODEL` constants in `config/settings.py`.
+- `google-generativeai>=0.8.0` and `pydantic>=2.0.0` added to `requirements.txt`. `anthropic` kept for Claude users.
+
+**Changed:**
+- `main.py` — refactored from hardcoded Claude to brain-agnostic routing:
+  - Imports both `claude_brain` and `gemini_brain` modules.
+  - `job_market_open()` checks `ACTIVE_AI_BRAIN` → routes to matching brain's `get_trade_signals()`.
+  - `job_monitor()` checks `ACTIVE_AI_BRAIN` → routes to matching brain's `get_position_advice()`.
+  - Global renamed: `_claude_signals` → `_ai_signals`. All log messages use `ACTIVE_AI_BRAIN.capitalize()`.
+  - Falls back to rule-based if no API key is set for the selected brain.
+- `.env.example` — added `ACTIVE_AI_BRAIN=gemini` and Gemini API key/model fields. Claude fields preserved.
+- `AGENTS.md` — updated AI Brain description, directory structure (now shows both brain files), timeline (generic "AI" instead of "Claude"), and rule #11 (covers both API keys).
+
+**Design decision:**
+Both brains coexist. User picks which API to purchase and sets `ACTIVE_AI_BRAIN` accordingly. Gemini Pro free tier makes it ideal for paper trading (DRY_RUN). Claude remains available for users who prefer Anthropic's reasoning.
+
+---
+
 ### v1.4 — 2026-05-03 — Claude Opus 4.6 (Thinking)
 
 **Added — Market Intelligence (news + events for Claude):**

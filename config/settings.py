@@ -64,10 +64,18 @@ MIN_STRATEGY_SCORE = 0.30        # skip trading if best score below this
 SL_ATR_MULTIPLIER = 1.0          # stop = entry - 1x ATR14
 TARGET_ATR_MULTIPLIER = 2.0      # target = entry + 2x ATR14
 
+# --- AI Brain Selector ---
+ACTIVE_AI_BRAIN = os.getenv("ACTIVE_AI_BRAIN", "gemini").lower() # "gemini" or "claude"
+
 # --- Claude AI brain ---
 ANTHROPIC_API_KEY  = os.getenv("ANTHROPIC_API_KEY", "")
 CLAUDE_TRADE_MODEL = os.getenv("CLAUDE_TRADE_MODEL", "claude-opus-4-7")    # morning decisions
 CLAUDE_MONITOR_MODEL = os.getenv("CLAUDE_MONITOR_MODEL", "claude-sonnet-4-6")  # position advice
+
+# --- Gemini AI brain ---
+GEMINI_API_KEY  = os.getenv("GEMINI_API_KEY", "")
+GEMINI_TRADE_MODEL = os.getenv("GEMINI_TRADE_MODEL", "gemini-2.5-pro")    # morning decisions (best reasoning)
+GEMINI_MONITOR_MODEL = os.getenv("GEMINI_MONITOR_MODEL", "gemini-2.5-flash")  # position advice (fast + smart)
 
 # --- Market Intelligence ---
 NEWS_FETCH_ENABLED = os.getenv("NEWS_FETCH_ENABLED", "true").lower() == "true"

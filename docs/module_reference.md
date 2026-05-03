@@ -1,4 +1,4 @@
-# Module Reference — Trade Mission v1.3
+# Module Reference — Trade Mission v1.5
 
 > Function signatures for every module. Keep this file accurate when renaming or adding functions.
 > Back to: [AGENTS.md](../AGENTS.md)
@@ -31,6 +31,10 @@ Pure constants module — no functions. **Every configurable value lives here.**
 | `ANTHROPIC_API_KEY` | `""` | Anthropic API key. Blank = Claude disabled, rule-based only. |
 | `CLAUDE_TRADE_MODEL` | `"claude-opus-4-7"` | Model for morning trade decisions (most capable). |
 | `CLAUDE_MONITOR_MODEL` | `"claude-sonnet-4-6"` | Model for mid-session position advice (faster/cheaper). |
+| `ACTIVE_AI_BRAIN` | `"gemini"` | Which AI brain to use: `"gemini"` or `"claude"`. |
+| `GEMINI_API_KEY` | `""` | Google Gemini API key. Blank = Gemini disabled. |
+| `GEMINI_TRADE_MODEL` | `"gemini-2.5-pro"` | Gemini model for morning trade decisions (best reasoning). |
+| `GEMINI_MONITOR_MODEL` | `"gemini-2.5-flash"` | Gemini model for mid-session position advice (fast + smart). |
 | `NEWS_FETCH_ENABLED` | `True` | Fetch Google News RSS for Claude |
 | `NEWS_MAX_HEADLINES` | `15` | Max headlines to send to Claude |
 | `NEWS_MAX_AGE_HOURS` | `24` | Cutoff age for news headlines |
@@ -79,6 +83,25 @@ Requires `ANTHROPIC_API_KEY` in `.env`. If blank, functions return immediately w
 - `_build_market_snapshot(...)` — builds the full morning briefing text sent to Claude (capital, Nifty, VIX, pre-market, per-stock RSI/ATR/EMA)
 - `_build_position_snapshot(...)` — builds mid-session position review text
 - `_TRADE_TOOL` / `_MONITOR_TOOL` — Claude tool schemas for structured JSON output
+
+---
+
+## `ai/gemini_brain.py`
+
+Gemini AI brain — same role as `claude_brain.py`, selected via `ACTIVE_AI_BRAIN="gemini"` in `.env`.
+Uses `google.generativeai` SDK with Pydantic schemas for structured JSON output.
+Requires `GEMINI_API_KEY` in `.env`. If blank, functions return immediately without calling the API.
+
+| Function | Signature | Returns | Notes |
+|---|---|---|---|
+| `get_trade_signals` | `(kite, universe_df, capital, conn, premarket, market_context, market_intel=None) → tuple[str, list[dict]]` | `(strategy_name, signals)` | Calls `gemini-2.5-pro` with full market briefing. Returns validated signal dicts compatible with `main._execute_signal()`. Same validations as Claude brain. |
+| `get_position_advice` | `(kite, open_trades, capital, realized_pnl, market_context) → list[dict]` | list of action dicts | Calls `gemini-2.5-flash`. Same action format as Claude brain. |
+
+**Pydantic schemas (for Gemini structured output):**
+- `Trade` — single trade: symbol, direction, entry_price, stop_loss, target_price, atr14, confidence, rationale
+- `TradeDecisions` — strategy_today, strategy_rationale, list of `Trade`
+- `PositionAction` — trade_id, action, new_sl, reason
+- `PositionAdvice` — list of `PositionAction`
 
 ---
 
@@ -332,7 +355,8 @@ Module-level: `_MIN_RANGE_CANDLES = 2`
 | `_open_trades` | `dict` | `{db_trade_id: trade_dict}` for all live trades |
 | `_daily_capital` | `float` | Opening capital for today |
 | `_realized_pnl` | `float` | Cumulative realized P&L today |
-| `_market_intel` | `dict` | News headlines + events calendar |
+| `_ai_signals` | `list` | Pre-fetched AI signals from morning call |
+| `_premarket_ctx` | `dict` | Pre-market intelligence dict |
 | `_adaptive_risk` | `float` | Base risk adjusted by recent win rate |
 | `_entries_stopped` | `bool` | Set True by kill-switch/profit-lock |
 | `_eod_done` | `bool` | Set True after EOD close runs |
