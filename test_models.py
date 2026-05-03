@@ -25,8 +25,7 @@ try:
     
     # Test 3.1 Pro (The experimental/new model)
     try:
-        print("Testing gemini-3.1-pro...")
-        model = genai.GenerativeModel("gemini-3.1-pro")
+        model = genai.GenerativeModel("gemini-3.1-pro-preview")
         response = model.generate_content("Say '3.1 works!' in one line.")
         print(f"  Response: {response.text.strip()}")
     except Exception as e:
