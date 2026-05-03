@@ -74,7 +74,7 @@ CLAUDE_MONITOR_MODEL = os.getenv("CLAUDE_MONITOR_MODEL", "claude-sonnet-4-6")  #
 
 # --- Gemini AI brain ---
 GEMINI_API_KEY  = os.getenv("GEMINI_API_KEY", "")
-GEMINI_TRADE_MODEL = os.getenv("GEMINI_TRADE_MODEL", "gemini-2.5-pro")    # morning decisions (best reasoning)
+GEMINI_TRADE_MODEL = os.getenv("GEMINI_TRADE_MODEL", "gemini-3.1-pro")    # morning decisions (best reasoning)
 GEMINI_MONITOR_MODEL = os.getenv("GEMINI_MONITOR_MODEL", "gemini-2.5-flash")  # position advice (fast + smart)
 
 # --- Market Intelligence ---
