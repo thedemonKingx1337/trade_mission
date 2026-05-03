@@ -15,7 +15,7 @@ KITE_PASSWORD = os.getenv("KITE_PASSWORD", "")
 KITE_TOTP_SECRET = os.getenv("KITE_TOTP_SECRET", "")
 
 # --- Capital & risk ---
-SEED_CAPITAL = float(os.getenv("SEED_CAPITAL", "5000.0"))
+SEED_CAPITAL = float(os.getenv("SEED_CAPITAL", "10000.0"))
 RISK_PER_TRADE_PCT = float(os.getenv("RISK_PER_TRADE_PCT", "0.02"))
 MAX_OPEN_POSITIONS = int(os.getenv("MAX_OPEN_POSITIONS", "2"))
 MAX_DAILY_LOSS_PCT = float(os.getenv("MAX_DAILY_LOSS_PCT", "0.05"))
