@@ -1,0 +1,75 @@
+{
+  "fixed_events": [
+    {
+      "date": "2026-02-01",
+      "event": "Union Budget 2026-27",
+      "impact": "high",
+      "expected_effect": "Extreme volatility expected. Market can swing 2-5% either way. Budget speech at 11 AM. Avoid intraday trading before 12 PM. After budget, if market stabilizes, range trading or mean reversion may work."
+    },
+    {
+      "date": "2026-04-08",
+      "event": "RBI MPC Policy Decision",
+      "impact": "high",
+      "expected_effect": "Monetary policy announcement at 10 AM IST. Banking and financial stocks highly volatile until decision. If rate cut: bullish for banks, use momentum. If rate hold: mildly bearish, use mean reversion. If rate hike: sharp sell-off, skip trading."
+    },
+    {
+      "date": "2026-06-17",
+      "event": "RBI MPC Policy Decision",
+      "impact": "high",
+      "expected_effect": "Monetary policy announcement at 10 AM IST. Banking stocks volatile. Avoid bank stocks before announcement. After decision, momentum if dovish, skip if hawkish."
+    },
+    {
+      "date": "2026-08-05",
+      "event": "RBI MPC Policy Decision",
+      "impact": "high",
+      "expected_effect": "Monetary policy announcement at 10 AM IST. Banking and NBFC stocks highly volatile. Wait for decision before entering bank trades."
+    },
+    {
+      "date": "2026-10-01",
+      "event": "RBI MPC Policy Decision",
+      "impact": "high",
+      "expected_effect": "Monetary policy announcement at 10 AM IST. Banking stocks volatile. Post-decision momentum trades if clear direction emerges."
+    },
+    {
+      "date": "2026-12-04",
+      "event": "RBI MPC Policy Decision",
+      "impact": "high",
+      "expected_effect": "Monetary policy announcement at 10 AM IST. Year-end liquidity concerns may amplify reaction. Banking stocks volatile."
+    },
+    {
+      "date": "2026-01-26",
+      "event": "Republic Day (Market Holiday)",
+      "impact": "low",
+      "expected_effect": "NSE closed. No trading."
+    },
+    {
+      "date": "2026-08-15",
+      "event": "Independence Day (Market Holiday)",
+      "impact": "low",
+      "expected_effect": "NSE closed. No trading."
+    },
+    {
+      "date": "2026-10-02",
+      "event": "Gandhi Jayanti (Market Holiday)",
+      "impact": "low",
+      "expected_effect": "NSE closed. No trading."
+    }
+  ],
+  "recurring": [
+    {
+      "weekday": "thursday",
+      "week": "last",
+      "event": "Monthly F&O Expiry (Nifty + Bank Nifty)",
+      "impact": "high",
+      "expected_effect": "Monthly expiry day. Very high volatility, especially after 2 PM. Gamma risk causes sharp moves. Wider bid-ask spreads. Range trading strategy is dangerous — avoid. Momentum may work if clear trend. Tighter stop-losses recommended (0.75x ATR instead of 1x). Consider skipping if VIX > 18."
+    },
+    {
+      "weekday": "thursday",
+      "week": "every",
+      "event": "Weekly Nifty Expiry",
+      "impact": "low",
+      "expected_effect": "Weekly options expiry. Mild increase in Nifty volatility after 2 PM. Normal strategies can run but be aware of sudden moves near 3:00-3:15 PM."
+    }
+  ],
+  "_instructions": "HOW TO ADD YOUR OWN EVENTS: Add a new entry to 'fixed_events' with date (YYYY-MM-DD), event name, impact (high/medium/low), and expected_effect (trading guidance). For example, to add a state election: {\"date\": \"2026-05-04\", \"event\": \"Kerala State Election Results\", \"impact\": \"high\", \"expected_effect\": \"High volatility in morning. If results are unexpected, market may gap down 1-2%. Wait for panic to settle, then buy dips in quality stocks after 10:30 AM.\"}"
+}
