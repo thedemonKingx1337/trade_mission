@@ -35,7 +35,7 @@
 | Capital model | ₹1000 one-time seed on first Monday; profits compound daily Mon–Fri |
 | Trading style | Intraday only — MIS product, long-only, all positions closed by 15:15 IST |
 | Safety default | `DRY_RUN=true` in `.env` — no real orders until set to `false` |
-| Future platform | Personal PC with Claude Opus 4.7 subscription; this file travels with the code |
+| AI Brain | Claude API (Opus for entry, Sonnet for monitoring). Falls back to rule-based if key missing. |
 
 **Capital compounding model:**
 - First Monday ever: seed ₹1000 (only time seed is used)
@@ -66,12 +66,12 @@ trade_mission/
 │   └── settings.py             Single source of truth for ALL constants and env vars.
 │                               Every other module imports from here. Never use os.getenv() elsewhere.
 │
-├── knowledge/                  Human-readable financial rules (read by selector.py at startup).
-│   ├── risk_rules.md
-│   ├── momentum_rules.md
-│   ├── mean_reversion_rules.md
+├── knowledge/                  Human-readable financial rules and structured data.
+│   ├── risk_rules.md           Core sizing and drawdown rules.
+│   ├── momentum_rules.md       Rules for ORB and gap-up continuation.
+│   ├── mean_reversion_rules.md Rules for RSI oversold and EMA-50 bounces.
 │   ├── market_regimes.md       Includes event-driven regime overrides + FII/DII rules.
-│   └── market_events.json      Events calendar: elections, RBI policy, budget, F&O expiry.
+│   └── market_events.json      Events calendar: elections, RBI policy, budget, F&O expiry (used by market_intelligence).
 │
 ├── auth/
 │   └── kite_auth.py            Daily login + token persistence. Token expires at midnight IST.
@@ -123,13 +123,13 @@ trade_mission/
 |---|---|---|
 | 08:45 | (manual) | Run `python main.py`, complete browser login, paste `request_token` |
 | 09:00 | `job_premarket` | Authenticate Kite, init DB, load capital, reconcile yesterday |
-| 09:15 | `job_market_open` | Filter universe, run `select_strategy()` — strategy locked for the day |
-| 09:25 | `job_entry_scan` | First entry — calls active strategy's `get_signals()`, places orders |
+| 09:15 | `job_market_open` | Filter universe, fetch market intelligence (news+events), compute adaptive risk, run `select_strategy()`, get Claude trade signals |
+| 09:25 | `job_entry_scan` | First entry — executes Claude signals or falls back to rule-based, places orders, applies correlation filter |
 | 09:30 | `job_entry_scan` | Repeat — fill remaining slots |
 | 09:45 | `job_entry_scan` | Repeat (range strategy eligible from here — needs 30 min data) |
 | 10:00 | `job_entry_scan` | Repeat |
 | 10:15 | `job_entry_scan` | **Final entry.** No new entries after this time. |
-| Every 60s | `job_monitor` | Trail SL, check fills, kill-switch, profit-lock, print dashboard |
+| Every 60s | `job_monitor` | Trail SL, time-decay SL, check partial profit fills, kill-switch, profit-lock. Every 5 mins: Claude position advice |
 | 15:15 | `job_eod_close` | Cancel all orders → MARKET SELL all open MIS positions |
 | 15:30 | `job_shutdown` | EOD compound, print daily summary, close DB, exit |
 
@@ -161,3 +161,12 @@ trade_mission/
 9. **EOD close must run by 15:15 IST.** Zerodha auto-squares MIS positions 15:20–15:30 with a penalty. Never move `EOD_SQUAREOFF_TIME` past 15:15.
 
 10. **Recovery mode is automatic.** Detected by `is_recovery_mode(conn)` in `tracker.py`. Applied in `select_strategy`. Parameters in `settings.py`. Do not hardcode recovery behaviour elsewhere.
+
+11. **Claude API Fallback.** If `ANTHROPIC_API_KEY` is missing or the API call fails, the bot MUST silently fall back to rule-based execution. No crashes allowed.
+
+12. **Profit Boosters.** The system enforces 5 profit boosters dynamically:
+    - **Partial Profit Booking:** 50% booked at 1x ATR, remaining rides to 2x ATR with SL at breakeven (`order_manager`).
+    - **Time-Decay SL:** SL progressively tightens after 12:00, 13:30, and 14:30 to prevent holding dead trades (`position_monitor`).
+    - **Sector Correlation Filter:** Max 1 open trade per sector (`utils/correlation_filter`).
+    - **Win-Rate Adaptive Risk:** Position sizing risk scales up or down based on the last 10 trades' win rate (`ledger/tracker`).
+    - **Market Intelligence:** Google News RSS + `market_events.json` + FII/DII data give macro context to Claude (`market_intelligence`).
