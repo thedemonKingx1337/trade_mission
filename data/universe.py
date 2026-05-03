@@ -4,19 +4,30 @@ from datetime import datetime, timedelta
 import pandas as pd
 from kiteconnect import KiteConnect
 
-from config.settings import NIFTY50_SYMBOLS, IST
-from data.market_data import fetch_quotes, get_daily_candles, get_instrument_token
+from config.settings import IST
+from data.market_data import fetch_quotes, get_daily_candles, get_instrument_token, _load_instruments
 
 logger = logging.getLogger(__name__)
 
 
-def get_base_universe() -> list[str]:
-    return list(NIFTY50_SYMBOLS)
+def get_base_universe(kite: KiteConnect) -> list[str]:
+    df = _load_instruments(kite)
+    if df.empty:
+        return []
+    
+    # Filter for active NSE equity instruments
+    eq_df = df[
+        (df["exchange"] == "NSE") & 
+        (df["segment"] == "NSE") & 
+        (df["instrument_type"] == "EQ")
+    ]
+    return eq_df["tradingsymbol"].tolist()
 
 
 def filter_universe(kite: KiteConnect, symbols: list[str] = None) -> pd.DataFrame:
     if symbols is None:
-        symbols = get_base_universe()
+        logger.info("Scanning 2,000+ NSE instruments...")
+        symbols = get_base_universe(kite)
 
     quotes = fetch_quotes(kite, symbols)
     rows = []
@@ -28,7 +39,9 @@ def filter_universe(kite: KiteConnect, symbols: list[str] = None) -> pd.DataFram
         prev_close = ohlc.get("close", 0)
         current = q.get("last_price", 0)
         volume = q.get("volume", 0)
-        if prev_close <= 0 or current <= 0:
+        if prev_close <= 50 or current <= 0:  # Anti penny-stock trap
+            continue
+        if volume < 100_000:  # Strict liquidity trap filter
             continue
         gap_pct = (current - prev_close) / prev_close * 100
         token = get_instrument_token(kite, sym)
@@ -53,7 +66,7 @@ def filter_universe(kite: KiteConnect, symbols: list[str] = None) -> pd.DataFram
 
 def get_premarket_snapshot(kite: KiteConnect, symbols: list[str] = None) -> pd.DataFrame:
     if symbols is None:
-        symbols = get_base_universe()
+        symbols = get_base_universe(kite)
 
     rows = []
     for sym in symbols:
