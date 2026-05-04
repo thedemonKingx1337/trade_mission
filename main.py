@@ -79,7 +79,7 @@ def setup_logging() -> logging.Logger:
             "CRITICAL": "bold_red",
         },
     ))
-    fh = RotatingFileHandler(log_file, maxBytes=5 * 1024 * 1024, backupCount=5)
+    fh = RotatingFileHandler(log_file, maxBytes=5 * 1024 * 1024, backupCount=5, encoding="utf-8")
     fh.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s"))
 
     root = logging.getLogger()
@@ -226,7 +226,7 @@ def job_market_open():
             )
             for s in ai_signals:
                 logger.info(
-                    f"  ↳ {s['symbol']} entry={s['entry_price']} "
+                    f"  -> {s['symbol']} entry={s['entry_price']} "
                     f"SL={s['stop_loss']} target={s['target_price']} — {s['rationale']}"
                 )
         elif ai_strategy == "skip" and (GEMINI_API_KEY if ACTIVE_AI_BRAIN == "gemini" else ANTHROPIC_API_KEY):
