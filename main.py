@@ -587,7 +587,8 @@ def main():
 
     # Catch-up logic for late starts
     now_time = _now_ist().time()
-    if time(9, 0) <= now_time < time(9, 15):
+    from datetime import time as dt_time
+    if dt_time(9, 0) <= now_time < dt_time(9, 15):
         logger.warning("Bot started between 9:00 and 9:15 AM. Running premarket catch-up instantly...")
         job_premarket()
 
