@@ -144,11 +144,7 @@ def job_premarket():
     _realized_pnl  = 0.0
     logger.info(f"Today's capital: Rs{_daily_capital:.2f}")
 
-    try:
-        premarket = get_premarket_snapshot(_kite)
-        logger.info(f"Pre-market snapshot: {len(premarket)} stocks loaded.")
-    except Exception as e:
-        logger.warning(f"Pre-market snapshot failed (non-fatal): {e}")
+    # Pre-market data is fetched dynamically during strategy selection.
 
 
 def job_market_open():
@@ -591,6 +587,10 @@ def main():
     if dt_time(9, 0) <= now_time < dt_time(9, 15):
         logger.warning("Bot started between 9:00 and 9:15 AM. Running premarket catch-up instantly...")
         job_premarket()
+    elif dt_time(9, 15) <= now_time < dt_time(15, 15):
+        logger.warning("Bot started mid-session! Catching up premarket and market open...")
+        job_premarket()
+        job_market_open()
 
     try:
         while True:
