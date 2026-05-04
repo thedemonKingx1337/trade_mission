@@ -66,15 +66,14 @@ class PositionAdvice(BaseModel):
 
 
 def _get_client():
-    """Lazy-load Generative AI client - only imported when API key is present."""
+    """Lazy-load new google.genai client - only imported when API key is present."""
     if not GEMINI_API_KEY:
         return None
     try:
-        import google.generativeai as genai
-        genai.configure(api_key=GEMINI_API_KEY)
-        return genai
+        from google import genai
+        return genai.Client(api_key=GEMINI_API_KEY)
     except ImportError:
-        logger.error("google-generativeai package not installed. Run: pip install google-generativeai>=0.8.0")
+        logger.error("google-genai package not installed. Run: pip install google-genai")
         return None
 
 
@@ -340,8 +339,8 @@ def get_trade_signals(
 
     Returns ("skip", []) on any failure - bot falls back to rule-based.
     """
-    genai = _get_client()
-    if genai is None:
+    client = _get_client()
+    if client is None:
         return "skip", []
 
     if universe_df is None or universe_df.empty:
@@ -369,18 +368,16 @@ def get_trade_signals(
 
         logger.info(f"Calling Gemini ({GEMINI_TRADE_MODEL}) for trade decisions...")
 
-        model = genai.GenerativeModel(
-            model_name=GEMINI_TRADE_MODEL,
-            system_instruction=system_prompt,
-        )
-
-        response = model.generate_content(
-            briefing,
-            generation_config=genai.GenerationConfig(
+        from google.genai import types as genai_types
+        response = client.models.generate_content(
+            model=GEMINI_TRADE_MODEL,
+            contents=briefing,
+            config=genai_types.GenerateContentConfig(
+                system_instruction=system_prompt,
                 response_mime_type="application/json",
                 response_schema=TradeDecisions,
                 temperature=0.2,
-            )
+            ),
         )
 
         raw_text = response.text
@@ -478,8 +475,8 @@ def get_position_advice(
 
     Returns [] on any failure or if no open trades.
     """
-    genai = _get_client()
-    if genai is None or not open_trades:
+    client = _get_client()
+    if client is None or not open_trades:
         return []
 
     try:
@@ -496,18 +493,16 @@ def get_position_advice(
 
         logger.info(f"Calling Gemini ({GEMINI_MONITOR_MODEL}) for position advice...")
 
-        model = genai.GenerativeModel(
-            model_name=GEMINI_MONITOR_MODEL,
-            system_instruction=system_prompt,
-        )
-
-        response = model.generate_content(
-            snapshot,
-            generation_config=genai.GenerationConfig(
+        from google.genai import types as genai_types
+        response = client.models.generate_content(
+            model=GEMINI_MONITOR_MODEL,
+            contents=snapshot,
+            config=genai_types.GenerateContentConfig(
+                system_instruction=system_prompt,
                 response_mime_type="application/json",
                 response_schema=PositionAdvice,
                 temperature=0.1,
-            )
+            ),
         )
 
         raw_text = response.text
