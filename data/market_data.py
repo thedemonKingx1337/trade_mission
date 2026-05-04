@@ -133,7 +133,7 @@ def get_nifty_vix(kite: KiteConnect) -> float:
                     return float(val)
     except Exception:
         pass
-    logger.warning("Could not fetch VIX — defaulting to 15.0")
+    logger.warning("Could not fetch VIX - defaulting to 15.0")
     return 15.0
 
 

@@ -70,7 +70,7 @@ def _time_decay_sl(
     atr = trade.get("atr14", entry * 0.01)
     profit = current_price - entry
 
-    # After 14:30 — aggressive mode
+    # After 14:30 - aggressive mode
     if now_time >= TIME_DECAY_AGGRESSIVE_AFTER:
         if profit > 0:
             # Lock at entry + 0.5×ATR
@@ -78,37 +78,37 @@ def _time_decay_sl(
             if aggressive_sl > current_sl:
                 logger.info(
                     f"Time-decay (14:30+): {trade['symbol']} locking profit "
-                    f"SL → {aggressive_sl:.2f}"
+                    f"SL -> {aggressive_sl:.2f}"
                 )
                 return aggressive_sl
         elif profit < -0.5 * atr:
-            # Losing more than 0.5 ATR after 14:30 — recommend exit
+            # Losing more than 0.5 ATR after 14:30 - recommend exit
             # We signal this by returning a SL above current price (triggers immediate exit)
             logger.warning(
                 f"Time-decay (14:30+): {trade['symbol']} losing Rs{profit:.2f} "
-                f"with <45min left — flagging for exit"
+                f"with <45min left - flagging for exit"
             )
             return round(current_price + 0.01, 2)  # triggers SL immediately
 
-    # After 13:30 — tighten mode
+    # After 13:30 - tighten mode
     elif now_time >= TIME_DECAY_TIGHTEN_AFTER:
         if profit > 0.3 * atr:
             tighten_sl = round(entry + 0.3 * atr, 2)
             if tighten_sl > current_sl:
                 logger.info(
                     f"Time-decay (13:30+): {trade['symbol']} tightening "
-                    f"SL → {tighten_sl:.2f}"
+                    f"SL -> {tighten_sl:.2f}"
                 )
                 return tighten_sl
 
-    # After 12:00 — breakeven mode
+    # After 12:00 - breakeven mode
     elif now_time >= TIME_DECAY_BREAKEVEN_AFTER:
         if profit > 0:
             breakeven_sl = entry
             if breakeven_sl > current_sl:
                 logger.info(
                     f"Time-decay (12:00+): {trade['symbol']} moving to breakeven "
-                    f"SL → {breakeven_sl:.2f}"
+                    f"SL -> {breakeven_sl:.2f}"
                 )
                 return breakeven_sl
 
@@ -146,7 +146,7 @@ def trail_stop_loss(
         new_sl = time_sl
 
     if new_sl > current_sl:
-        logger.info(f"Trailing SL for {trade['symbol']}: {current_sl:.2f} → {new_sl:.2f}")
+        logger.info(f"Trailing SL for {trade['symbol']}: {current_sl:.2f} -> {new_sl:.2f}")
         modify_sl_order(kite, sl_order_id, new_sl, qty, dry_run)
         return new_sl
 
@@ -177,7 +177,7 @@ def _check_partial_fill(
         partial_pnl = (partial_target - trade["entry_price"]) * partial_qty
 
         logger.info(
-            f"🎯 PARTIAL PROFIT BOOKED: {trade['symbol']} — "
+            f"🎯 PARTIAL PROFIT BOOKED: {trade['symbol']} - "
             f"{partial_qty} shares @ {partial_target:.2f}, "
             f"P&L Rs{partial_pnl:+.2f}"
         )
@@ -192,7 +192,7 @@ def _check_partial_fill(
         if entry > current_sl:
             logger.info(
                 f"Moving SL to breakeven for {trade['symbol']} remaining "
-                f"{trade['quantity']} shares: {current_sl:.2f} → {entry:.2f}"
+                f"{trade['quantity']} shares: {current_sl:.2f} -> {entry:.2f}"
             )
             modify_sl_order(
                 kite, trade.get("sl_order_id", ""), entry,

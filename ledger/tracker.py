@@ -26,7 +26,7 @@ def get_today_capital(conn: sqlite3.Connection) -> float:
     - If today's row already exists: return it (idempotent on multiple calls).
     - If previous day exists with a closing_capital: use that (daily compounding).
     - If no history at all: seed with SEED_CAPITAL (first day ever).
-    Note: we do NOT reset to SEED_CAPITAL every Monday — the user seeds Rs1000
+    Note: we do NOT reset to SEED_CAPITAL every Monday - the user seeds Rs1000
     only on the very first Monday. After that, profits compound continuously.
     """
     today = _today_str()
@@ -46,7 +46,7 @@ def get_today_capital(conn: sqlite3.Connection) -> float:
     if prev and prev["closing_capital"] is not None:
         capital = float(prev["closing_capital"])
     else:
-        # First ever run — seed with SEED_CAPITAL
+        # First ever run - seed with SEED_CAPITAL
         capital = SEED_CAPITAL
         conn.execute(
             """INSERT OR IGNORE INTO capital_log
@@ -256,7 +256,7 @@ def get_adaptive_risk_pct(
     win_rate, wins, total = get_recent_win_rate(conn, ADAPTIVE_RISK_LOOKBACK)
 
     if total < 3:
-        # Not enough data — use base risk
+        # Not enough data - use base risk
         return base_risk_pct
 
     import logging
@@ -266,7 +266,7 @@ def get_adaptive_risk_pct(
         adjusted = base_risk_pct * ADAPTIVE_RISK_HOT_MULT
         logger.info(
             f"Adaptive risk: HOT streak ({wins}/{total} = {win_rate:.0%}) "
-            f"→ risk boosted {base_risk_pct:.2%} → {adjusted:.2%}"
+            f"-> risk boosted {base_risk_pct:.2%} -> {adjusted:.2%}"
         )
         return adjusted
 
@@ -274,7 +274,7 @@ def get_adaptive_risk_pct(
         adjusted = base_risk_pct * ADAPTIVE_RISK_ICE_MULT
         logger.warning(
             f"Adaptive risk: ICE-COLD streak ({wins}/{total} = {win_rate:.0%}) "
-            f"→ risk reduced {base_risk_pct:.2%} → {adjusted:.2%}"
+            f"-> risk reduced {base_risk_pct:.2%} -> {adjusted:.2%}"
         )
         return adjusted
 
@@ -282,12 +282,12 @@ def get_adaptive_risk_pct(
         adjusted = base_risk_pct * ADAPTIVE_RISK_COLD_MULT
         logger.info(
             f"Adaptive risk: COLD streak ({wins}/{total} = {win_rate:.0%}) "
-            f"→ risk reduced {base_risk_pct:.2%} → {adjusted:.2%}"
+            f"-> risk reduced {base_risk_pct:.2%} -> {adjusted:.2%}"
         )
         return adjusted
 
     else:
-        logger.debug(f"Adaptive risk: NORMAL ({wins}/{total} = {win_rate:.0%}) → base risk")
+        logger.debug(f"Adaptive risk: NORMAL ({wins}/{total} = {win_rate:.0%}) -> base risk")
         return base_risk_pct
 
 
@@ -309,7 +309,7 @@ def print_daily_summary(conn: sqlite3.Connection, trade_date: str) -> None:
     pct = (pnl / opening * 100) if opening else 0
 
     print("\n" + "=" * 60)
-    print(f"  TRADE MISSION — Daily Summary  {trade_date}")
+    print(f"  TRADE MISSION - Daily Summary  {trade_date}")
     print("=" * 60)
     print(f"  Opening Capital : Rs{opening:.2f}")
     print(f"  Closing Capital : Rs{closing:.2f}")

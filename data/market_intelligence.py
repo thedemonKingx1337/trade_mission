@@ -1,5 +1,5 @@
 """
-Market Intelligence — Trade Mission
+Market Intelligence - Trade Mission
 
 Fetches Indian market news headlines from free RSS feeds and reads
 a local events calendar. All data is fed to Claude's market briefing
@@ -8,7 +8,7 @@ earnings, global crises) when making trade decisions.
 
 Entry point: get_market_intelligence() -> dict
 
-All network calls are exception-safe — returns empty data on failure.
+All network calls are exception-safe - returns empty data on failure.
 """
 import json
 import logging

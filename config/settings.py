@@ -60,7 +60,7 @@ RANGE_MAX_VIX = 13.0
 PANIC_VIX_THRESHOLD = 25.0
 MIN_STRATEGY_SCORE = 0.30        # skip trading if best score below this
 
-# --- SL / Target (used everywhere — do not hardcode elsewhere) ---
+# --- SL / Target (used everywhere - do not hardcode elsewhere) ---
 SL_ATR_MULTIPLIER = 1.0          # stop = entry - 1x ATR14
 TARGET_ATR_MULTIPLIER = 2.0      # target = entry + 2x ATR14
 
@@ -100,11 +100,11 @@ TIME_DECAY_AGGRESSIVE_AFTER = time(14, 30)  # exit losing trades, lock profitabl
 # --- Win-rate adaptive risk ---
 ADAPTIVE_RISK_ENABLED = True
 ADAPTIVE_RISK_LOOKBACK = 10         # number of recent trades to evaluate
-ADAPTIVE_RISK_HOT_THRESHOLD = 0.60  # win rate above this → boost risk
+ADAPTIVE_RISK_HOT_THRESHOLD = 0.60  # win rate above this -> boost risk
 ADAPTIVE_RISK_HOT_MULT = 1.3       # risk multiplier on hot streak
-ADAPTIVE_RISK_COLD_THRESHOLD = 0.40 # win rate below this → reduce risk
+ADAPTIVE_RISK_COLD_THRESHOLD = 0.40 # win rate below this -> reduce risk
 ADAPTIVE_RISK_COLD_MULT = 0.7      # risk multiplier on cold streak
-ADAPTIVE_RISK_ICE_THRESHOLD = 0.25  # win rate below this → minimal risk
+ADAPTIVE_RISK_ICE_THRESHOLD = 0.25  # win rate below this -> minimal risk
 ADAPTIVE_RISK_ICE_MULT = 0.5       # risk multiplier on ice-cold streak
 
 # --- Misc ---
@@ -127,7 +127,7 @@ NSE_HOLIDAYS: set[date] = {
     date(2025, 12, 25),  # Christmas
     # 2026
     date(2026, 1, 26),   # Republic Day
-    date(2026, 3, 20),   # Holi (approximate — confirm from NSE circular)
+    date(2026, 3, 20),   # Holi (approximate - confirm from NSE circular)
     date(2026, 4, 3),    # Good Friday
     date(2026, 8, 15),   # Independence Day
     date(2026, 10, 2),   # Gandhi Jayanti

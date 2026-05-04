@@ -1,5 +1,5 @@
 """
-Trade Mission — Zerodha KiteConnect Intraday Bot
+Trade Mission - Zerodha KiteConnect Intraday Bot
 Run: python main.py
 """
 import logging
@@ -123,12 +123,12 @@ def _safe_close_conn():
 def job_premarket():
     global _kite, _conn, _daily_capital, _realized_pnl
     if not is_trading_day():
-        logger.info("Not a trading day — skipping.")
+        logger.info("Not a trading day - skipping.")
         return
 
     logger.info("=== PRE-MARKET: Initialising ===")
     if DRY_RUN:
-        logger.warning("*** DRY-RUN MODE — no real orders will be placed ***")
+        logger.warning("*** DRY-RUN MODE - no real orders will be placed ***")
 
     _conn = get_connection()
     initialize_db()
@@ -213,7 +213,7 @@ def job_market_open():
                 _premarket_ctx, _market_ctx, _market_intel,
             )
         else:
-            logger.info(f"No API key set for {ACTIVE_AI_BRAIN} — using rule-based strategy only")
+            logger.info(f"No API key set for {ACTIVE_AI_BRAIN} - using rule-based strategy only")
 
         if ai_signals:
             # Apply sector correlation filter
@@ -221,20 +221,20 @@ def job_market_open():
             _ai_signals = ai_signals
             _strategy_name  = ai_strategy
             logger.info(
-                f"{ACTIVE_AI_BRAIN.capitalize()} AI strategy: {ai_strategy.upper()} — "
+                f"{ACTIVE_AI_BRAIN.capitalize()} AI strategy: {ai_strategy.upper()} - "
                 f"{len(ai_signals)} signal(s) queued (after correlation filter)"
             )
             for s in ai_signals:
                 logger.info(
                     f"  -> {s['symbol']} entry={s['entry_price']} "
-                    f"SL={s['stop_loss']} target={s['target_price']} — {s['rationale']}"
+                    f"SL={s['stop_loss']} target={s['target_price']} - {s['rationale']}"
                 )
         elif ai_strategy == "skip" and (GEMINI_API_KEY if ACTIVE_AI_BRAIN == "gemini" else ANTHROPIC_API_KEY):
-            logger.warning(f"{ACTIVE_AI_BRAIN.capitalize()} AI recommends SKIP today — using rule-based fallback")
+            logger.warning(f"{ACTIVE_AI_BRAIN.capitalize()} AI recommends SKIP today - using rule-based fallback")
         elif (GEMINI_API_KEY if ACTIVE_AI_BRAIN == "gemini" else ANTHROPIC_API_KEY):
-            logger.info(f"{ACTIVE_AI_BRAIN.capitalize()} AI found no signals — rule-based will scan at entry windows")
+            logger.info(f"{ACTIVE_AI_BRAIN.capitalize()} AI found no signals - rule-based will scan at entry windows")
     except Exception as e:
-        logger.error(f"AI call failed: {e} — using rule-based signals")
+        logger.error(f"AI call failed: {e} - using rule-based signals")
 
     # Write final strategy to DB (after potential AI override)
     if _conn:
@@ -323,17 +323,17 @@ def _execute_signal(signal: dict):
     symbol = signal["symbol"]
     total_qty = signal["quantity"]
     atr14 = signal.get("atr14", signal["entry_price"] * 0.01)
-    logger.info(f"SIGNAL: {symbol} — {signal.get('rationale', '')}")
+    logger.info(f"SIGNAL: {symbol} - {signal.get('rationale', '')}")
 
     entry_oid = place_entry_order(_kite, signal, DRY_RUN)
     if not entry_oid:
-        logger.error(f"Entry order FAILED for {symbol} — aborting this trade")
+        logger.error(f"Entry order FAILED for {symbol} - aborting this trade")
         return
 
     sl_oid = place_sl_order(_kite, symbol, total_qty, signal["stop_loss"], DRY_RUN)
     if not sl_oid:
         logger.error(
-            f"SL order FAILED for {symbol} — cancelling entry and aborting. "
+            f"SL order FAILED for {symbol} - cancelling entry and aborting. "
             "This trade has no stop-loss protection."
         )
         place_market_sell(_kite, symbol, total_qty, DRY_RUN)
@@ -365,7 +365,7 @@ def _execute_signal(signal: dict):
     tgt_oid = place_target_order(
         _kite, symbol, remaining_qty, signal["target_price"], DRY_RUN
     )
-    # Target order failure is non-fatal — monitor will handle exit manually
+    # Target order failure is non-fatal - monitor will handle exit manually
 
     trade_id = record_trade_entry(
         _conn,
@@ -424,13 +424,13 @@ def job_monitor():
 
     # Step 2: Kill-switch / profit-lock (Python, not Claude)
     if kill:
-        logger.critical("KILL-SWITCH triggered — closing all positions.")
+        logger.critical("KILL-SWITCH triggered - closing all positions.")
         _entries_stopped = True
         _trigger_emergency_close("KILL_SWITCH")
         return
 
     if lock:
-        logger.info("PROFIT LOCK triggered — banking the gains.")
+        logger.info("PROFIT LOCK triggered - banking the gains.")
         _entries_stopped = True
         _trigger_emergency_close("PROFIT_LOCK")
         return
@@ -467,7 +467,7 @@ def job_monitor():
 
                 if act == "exit_now":
                     logger.warning(
-                        f"{ACTIVE_AI_BRAIN.capitalize()} AI: exit {trade['symbol']} now — {reason}"
+                        f"{ACTIVE_AI_BRAIN.capitalize()} AI: exit {trade['symbol']} now - {reason}"
                     )
                     place_market_sell(_kite, trade["symbol"], trade["quantity"], DRY_RUN)
                     pnl = record_trade_exit(
@@ -482,7 +482,7 @@ def job_monitor():
                 elif act in ("tighten_sl", "trail_sl") and new_sl:
                     logger.info(
                         f"{ACTIVE_AI_BRAIN.capitalize()} AI: tighten SL {trade['symbol']} "
-                        f"{trade['stop_loss']:.2f} → {new_sl:.2f} — {reason}"
+                        f"{trade['stop_loss']:.2f} -> {new_sl:.2f} - {reason}"
                     )
                     modify_sl_order(
                         _kite, trade["sl_order_id"], new_sl, trade["quantity"], DRY_RUN
@@ -555,7 +555,7 @@ def job_shutdown():
 
 def main():
     print("\n" + "=" * 65)
-    print("  TRADE MISSION — Zerodha KiteConnect Intraday Bot")
+    print("  TRADE MISSION - Zerodha KiteConnect Intraday Bot")
     print(f"  Date: {_today_str()}    DRY_RUN: {DRY_RUN}")
     print("=" * 65 + "\n")
 
@@ -579,7 +579,7 @@ def main():
     schedule.every().day.at("15:30").do(job_shutdown)
 
     logger.info("Scheduler ready. Waiting for 9:00 AM IST…")
-    logger.info("Press Ctrl+C at any time — EOD close will run automatically.")
+    logger.info("Press Ctrl+C at any time - EOD close will run automatically.")
 
     # Catch-up logic for late starts
     now_time = _now_ist().time()
@@ -597,7 +597,7 @@ def main():
             schedule.run_pending()
             time.sleep(1)
     except KeyboardInterrupt:
-        logger.warning("Ctrl+C — running EOD close before exit…")
+        logger.warning("Ctrl+C - running EOD close before exit…")
         if _kite and not _eod_done:
             job_eod_close()
         job_shutdown()

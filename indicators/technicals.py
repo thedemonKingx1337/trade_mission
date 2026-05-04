@@ -60,7 +60,7 @@ def add_bollinger_bands(df: pd.DataFrame, period: int = 20, std: float = 2.0) ->
         return df
     bbands = ta.bbands(df["close"], length=period, std=std)
     if bbands is not None and not bbands.empty:
-        # Access by column name suffix, not position — robust to pandas_ta version changes
+        # Access by column name suffix, not position - robust to pandas_ta version changes
         cols = bbands.columns.tolist()
         upper_col = next((c for c in cols if c.startswith("BBU")), None)
         mid_col   = next((c for c in cols if c.startswith("BBM")), None)

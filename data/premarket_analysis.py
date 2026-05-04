@@ -2,7 +2,7 @@
 Pre-market intelligence for NSE/Zerodha KiteConnect intraday bot.
 
 Called from strategies/selector.py during select_strategy() at 09:15 IST.
-All external network calls (NSE public API) use graceful try/except fallbacks —
+All external network calls (NSE public API) use graceful try/except fallbacks -
 a failure here must never crash the bot or prevent strategy selection.
 
 Main entry point: get_premarket_context(kite, universe_df) -> dict
@@ -114,9 +114,9 @@ def get_nifty_fno_pcr() -> float:
     Fetch Nifty Put-Call Ratio from NSE option chain.
 
     PCR interpretation:
-      < 0.8  → call-heavy → bullish sentiment
-      0.8–1.2 → neutral
-      > 1.2  → put-heavy → bearish / hedging activity
+      < 0.8  -> call-heavy -> bullish sentiment
+      0.8–1.2 -> neutral
+      > 1.2  -> put-heavy -> bearish / hedging activity
 
     Returns: float PCR value, or 1.0 (neutral) on failure.
     """
@@ -228,7 +228,7 @@ def get_top_movers_prev_day(
 ) -> dict:
     """
     Rank universe stocks by current gap from previous day's close.
-    Uses kite.quote() OHLC data — ohlc.close is previous day's close.
+    Uses kite.quote() OHLC data - ohlc.close is previous day's close.
 
     Returns: {"gainers": [sym,...], "losers": [sym,...], "changes": {sym: pct}}
     """

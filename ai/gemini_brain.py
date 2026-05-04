@@ -1,21 +1,21 @@
 """
-Gemini AI Brain — Trade Mission
+Gemini AI Brain - Trade Mission
 
 Replaces rule-based strategy scoring with real Gemini intelligence.
 Gemini reads live market data, indicators, context and returns structured
 trade decisions. All execution (order placement, kill-switch, EOD close)
-remains in Python — Gemini only advises, Python executes.
+remains in Python - Gemini only advises, Python executes.
 
 Entry points:
   get_trade_signals(kite, universe_df, capital, conn, premarket, market_context)
-      → list[dict]  (signal dicts compatible with _execute_signal in main.py)
+      -> list[dict]  (signal dicts compatible with _execute_signal in main.py)
       Uses gemini-2.5-pro (best reasoning model, "boss level" for decisions).
 
   get_position_advice(kite, open_trades, capital, realized_pnl, market_context)
-      → list[dict]  (position management instructions)
+      -> list[dict]  (position management instructions)
       Uses gemini-2.5-flash (fast + smart for 5-minute monitoring cycles).
 
-Both functions return [] on any failure — bot falls back to rule-based.
+Both functions return [] on any failure - bot falls back to rule-based.
 """
 import json
 import logging
@@ -42,13 +42,13 @@ logger = logging.getLogger(__name__)
 
 class Trade(BaseModel):
     symbol: str = Field(description="NSE trading symbol e.g. RELIANCE")
-    direction: str = Field(description="Always BUY — long-only bot.")
+    direction: str = Field(description="Always BUY - long-only bot.")
     entry_price: float = Field(description="Entry price in Rs. Use current market price or slightly above breakout level.")
     stop_loss: float = Field(description="Stop-loss price. Must be below entry_price.")
     target_price: float = Field(description="Target price. Must give at least 1.5:1 reward-to-risk ratio.")
     atr14: float = Field(description="ATR(14) from daily candles. Used for trailing SL.")
     confidence: float = Field(description="Signal confidence 0.0 to 1.0.")
-    rationale: str = Field(description="Why this trade — specific data points that support it.")
+    rationale: str = Field(description="Why this trade - specific data points that support it.")
 
 class TradeDecisions(BaseModel):
     strategy_today: str = Field(description="The primary strategy for today: 'momentum', 'mean_reversion', 'range_trading', or 'skip'")
@@ -66,7 +66,7 @@ class PositionAdvice(BaseModel):
 
 
 def _get_client():
-    """Lazy-load Generative AI client — only imported when API key is present."""
+    """Lazy-load Generative AI client - only imported when API key is present."""
     if not GEMINI_API_KEY:
         return None
     try:
@@ -98,7 +98,7 @@ def _build_market_snapshot(
     now_ist = datetime.now(IST).strftime("%Y-%m-%d %H:%M IST")
 
     lines = [
-        f"=== TRADE MISSION — Market Briefing {now_ist} ===",
+        f"=== TRADE MISSION - Market Briefing {now_ist} ===",
         f"",
         f"ACCOUNT",
         f"  Today's capital : Rs{capital:.2f}",
@@ -131,7 +131,7 @@ def _build_market_snapshot(
             f"",
             f"PRE-MARKET INTELLIGENCE",
             f"  Overnight bias  : {bias} (Gift Nifty: {gift_chg:+.2f}%)",
-            f"  F&O PCR         : {pcr:.2f}  {'(bullish — call heavy)' if pcr < 0.8 else '(bearish — put heavy)' if pcr > 1.2 else '(neutral)'}",
+            f"  F&O PCR         : {pcr:.2f}  {'(bullish - call heavy)' if pcr < 0.8 else '(bearish - put heavy)' if pcr > 1.2 else '(neutral)'}",
             f"  Top gainers     : {', '.join(gainers) if gainers else 'none'}",
             f"  Top losers      : {', '.join(losers) if losers else 'none'}",
         ]
@@ -165,9 +165,9 @@ def _build_market_snapshot(
         event_alerts = market_intel.get("event_alerts", [])
 
         if headlines:
-            lines += ["", "MARKET NEWS (last 24 hours — from Google News)"]
+            lines += ["", "MARKET NEWS (last 24 hours - from Google News)"]
             for i, h in enumerate(headlines[:12], 1):
-                source = f" — {h['source']}" if h.get('source') else ""
+                source = f" - {h['source']}" if h.get('source') else ""
                 age = f", {h['published']}" if h.get('published') else ""
                 lines.append(f"  {i:2d}. \"{h['title']}\"{source}{age}")
 
@@ -306,14 +306,14 @@ def _build_position_snapshot(
         "",
         "INSTRUCTIONS",
         "For each position, respond with one of:",
-        "  hold          — do nothing",
-        "  exit_now      — close immediately at market (reason required)",
-        "  tighten_sl    — move SL to a specific price (provide new_sl)",
-        "  trail_sl      — move SL up to entry + offset (provide new_sl)",
+        "  hold          - do nothing",
+        "  exit_now      - close immediately at market (reason required)",
+        "  tighten_sl    - move SL to a specific price (provide new_sl)",
+        "  trail_sl      - move SL up to entry + offset (provide new_sl)",
         "",
         "RULES",
         "  - Never lower a stop-loss.",
-        "  - Do not exit a position if unrealized P&L is positive and > 0.5 ATR — let it run.",
+        "  - Do not exit a position if unrealized P&L is positive and > 0.5 ATR - let it run.",
         "  - Recommend exit_now if: VIX has spiked above 25, or the trade has been open > 3 hours with no progress.",
         "  - If time is after 14:45 IST and position is profitable, recommend tightening SL to lock gains.",
     ]
@@ -338,7 +338,7 @@ def get_trade_signals(
     Returns: (strategy_name: str, signals: list[dict])
     Each signal dict is compatible with main._execute_signal().
 
-    Returns ("skip", []) on any failure — bot falls back to rule-based.
+    Returns ("skip", []) on any failure - bot falls back to rule-based.
     """
     genai = _get_client()
     if genai is None:
@@ -352,7 +352,7 @@ def get_trade_signals(
 
         system_prompt = (
             "You are an expert Indian intraday trader managing a Zerodha account. "
-            "You trade Nifty 50 stocks using MIS (intraday) product — all positions MUST close by 15:15 IST. "
+            "You trade Nifty 50 stocks using MIS (intraday) product - all positions MUST close by 15:15 IST. "
             "You are long-only. Your goal is to maximise end-of-day profit while strictly respecting risk rules. "
             "You have deep knowledge of Opening Range Breakout (momentum), RSI oversold bounce (mean reversion), "
             "and range trading strategies. You also understand Indian market microstructure: "
@@ -360,10 +360,10 @@ def get_trade_signals(
             "\n\nIMPORTANT: You also have access to LIVE MARKET NEWS HEADLINES and an EVENTS CALENDAR. "
             "Factor these into your decisions:\n"
             "- If there are HIGH-IMPACT EVENTS today (elections, RBI policy, budget), adjust strategy accordingly.\n"
-            "- If FII are NET SELLING heavily, lean bearish — avoid momentum, prefer defensive mean reversion.\n"
+            "- If FII are NET SELLING heavily, lean bearish - avoid momentum, prefer defensive mean reversion.\n"
             "- If news headlines indicate panic or crisis, consider skipping or wait for dip to buy.\n"
             "- On F&O expiry days, avoid range trading (gamma breaks ranges). Tighter SLs recommended.\n"
-            "- Election result days: if market gaps down on uncertainty, it often recovers — consider buying the dip after 10 AM.\n\n"
+            "- Election result days: if market gaps down on uncertainty, it often recovers - consider buying the dip after 10 AM.\n\n"
             "Be decisive. If conditions are good, place trades. If conditions are unfavourable, return an empty list. "
         )
 
@@ -385,7 +385,7 @@ def get_trade_signals(
 
         raw_text = response.text
         if not raw_text:
-            logger.warning("Gemini returned empty response — falling back to rule-based")
+            logger.warning("Gemini returned empty response - falling back to rule-based")
             return "skip", []
 
         tool_result = json.loads(raw_text)
@@ -395,7 +395,7 @@ def get_trade_signals(
         raw_trades = tool_result.get("trades", [])
 
         logger.info(
-            f"Gemini chose strategy: {strategy.upper()} — {strategy_rationale} "
+            f"Gemini chose strategy: {strategy.upper()} - {strategy_rationale} "
             f"| {len(raw_trades)} trade(s) proposed"
         )
 
@@ -412,25 +412,25 @@ def get_trade_signals(
             atr14 = float(t.get("atr14", entry * 0.01))
 
             if not symbol or entry <= 0 or sl <= 0 or target <= 0:
-                logger.warning(f"Gemini trade skipped — missing/invalid fields: {t}")
+                logger.warning(f"Gemini trade skipped - missing/invalid fields: {t}")
                 continue
             if sl >= entry:
-                logger.warning(f"Gemini trade {symbol} skipped — SL {sl} >= entry {entry}")
+                logger.warning(f"Gemini trade {symbol} skipped - SL {sl} >= entry {entry}")
                 continue
             if target <= entry:
-                logger.warning(f"Gemini trade {symbol} skipped — target {target} <= entry {entry}")
+                logger.warning(f"Gemini trade {symbol} skipped - target {target} <= entry {entry}")
                 continue
             rr = (target - entry) / (entry - sl) if (entry - sl) > 0 else 0
             if rr < 1.2:
-                logger.warning(f"Gemini trade {symbol} skipped — R:R {rr:.2f} < 1.2:1")
+                logger.warning(f"Gemini trade {symbol} skipped - R:R {rr:.2f} < 1.2:1")
                 continue
 
             qty = calculate_position_size(capital, entry, sl, RISK_PER_TRADE_PCT)
             if qty <= 0:
-                logger.warning(f"Gemini trade {symbol} skipped — qty=0 (capital Rs{capital:.0f}, SL dist={entry-sl:.2f})")
+                logger.warning(f"Gemini trade {symbol} skipped - qty=0 (capital Rs{capital:.0f}, SL dist={entry-sl:.2f})")
                 continue
 
-            # Look up instrument_token from universe_df (informational only — not used by order_manager)
+            # Look up instrument_token from universe_df (informational only - not used by order_manager)
             token_row = universe_df[universe_df["symbol"] == symbol]
             instrument_token = int(token_row.iloc[0]["instrument_token"]) if not token_row.empty and token_row.iloc[0]["instrument_token"] else None
 
@@ -453,7 +453,7 @@ def get_trade_signals(
         return strategy, signals
 
     except Exception as e:
-        logger.error(f"Gemini trade signal call failed: {e} — falling back to rule-based")
+        logger.error(f"Gemini trade signal call failed: {e} - falling back to rule-based")
         return "skip", []
 
 
@@ -485,7 +485,7 @@ def get_position_advice(
             "You manage open MIS (intraday) positions. "
             "Your job is to protect profits, cut losses early, and let winners run. "
             "You must never lower a stop-loss. "
-            "Be conservative — if a trade is healthy and moving in the right direction, say 'hold'. "
+            "Be conservative - if a trade is healthy and moving in the right direction, say 'hold'. "
             "Only recommend exits for genuine risk reasons, not just because the trade is not moving. "
         )
 
@@ -528,11 +528,11 @@ def get_position_advice(
             if act in ("tighten_sl", "trail_sl") and new_sl is not None:
                 current_sl = trade.get("stop_loss", 0)
                 if float(new_sl) <= current_sl:
-                    logger.debug(f"Gemini wanted to lower SL for {trade['symbol']} — rejected")
+                    logger.debug(f"Gemini wanted to lower SL for {trade['symbol']} - rejected")
                     continue
 
             logger.info(
-                f"Gemini position advice: trade_id={trade_id} {trade.get('symbol','?')} → {act}"
+                f"Gemini position advice: trade_id={trade_id} {trade.get('symbol','?')} -> {act}"
                 + (f" new_sl={new_sl:.2f}" if new_sl else "")
                 + (f" reason: {reason}" if reason else "")
             )

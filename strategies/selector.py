@@ -73,7 +73,7 @@ def get_market_context(kite: KiteConnect) -> dict:
 
 
 def _compute_rsi_data(universe_df: pd.DataFrame, kite: KiteConnect) -> dict[str, float]:
-    """Return {symbol: latest_rsi} for all universe stocks — used for mean-reversion scoring."""
+    """Return {symbol: latest_rsi} for all universe stocks - used for mean-reversion scoring."""
     from data.market_data import get_today_candles
     from indicators.technicals import add_rsi, _safe_last
     rsi_data = {}
@@ -242,7 +242,7 @@ def select_strategy(
 
     if vix > PANIC_VIX_THRESHOLD:
         logger.warning(
-            f"PANIC REGIME — VIX {vix:.1f} > {PANIC_VIX_THRESHOLD}. Skipping trading today."
+            f"PANIC REGIME - VIX {vix:.1f} > {PANIC_VIX_THRESHOLD}. Skipping trading today."
         )
         return "skip", {"reason": f"VIX {vix:.1f} in panic territory", "vix": vix}
 
@@ -266,7 +266,7 @@ def select_strategy(
 
     scores = {"momentum": m_score, "mean_reversion": mr_score, "range_trading": r_score}
     logger.info(
-        f"Strategy scores — Momentum: {m_score:.2f}, "
+        f"Strategy scores - Momentum: {m_score:.2f}, "
         f"MeanRev: {mr_score:.2f}, Range: {r_score:.2f}"
     )
 
@@ -275,11 +275,11 @@ def select_strategy(
 
     if best_score < MIN_STRATEGY_SCORE:
         logger.info(
-            f"All strategy scores below {MIN_STRATEGY_SCORE} — skipping trading today."
+            f"All strategy scores below {MIN_STRATEGY_SCORE} - skipping trading today."
         )
         return "skip", {"reason": "No strategy scored above threshold", "scores": scores}
 
-    # Recovery mode — read from settings constants (not hardcoded)
+    # Recovery mode - read from settings constants (not hardcoded)
     recovery = False
     max_positions = MAX_OPEN_POSITIONS
     risk_pct = RISK_PER_TRADE_PCT
@@ -289,7 +289,7 @@ def select_strategy(
         risk_pct = round(RISK_PER_TRADE_PCT * RECOVERY_RISK_MULTIPLIER, 4)
         max_positions = RECOVERY_MAX_POSITIONS
         logger.warning(
-            f"RECOVERY MODE ACTIVE — risk_pct={risk_pct:.0%}, "
+            f"RECOVERY MODE ACTIVE - risk_pct={risk_pct:.0%}, "
             f"max_positions={max_positions}, min_score={RECOVERY_MIN_SCORE}"
         )
         if best_score < RECOVERY_MIN_SCORE:

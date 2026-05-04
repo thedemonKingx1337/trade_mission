@@ -29,7 +29,7 @@ def scan_candidates(
     nifty_ltp = get_nifty_ltp(kite)
     nifty_gap = universe_df.attrs.get("nifty_gap_pct", 0.0)
     if nifty_gap < -0.5:
-        logger.info(f"Nifty down {nifty_gap:.2f}% — momentum suppressed")
+        logger.info(f"Nifty down {nifty_gap:.2f}% - momentum suppressed")
         return []
 
     gap_stocks = universe_df[universe_df["gap_pct"] >= min_gap]
@@ -40,7 +40,7 @@ def scan_candidates(
     for _, row in gap_stocks.iterrows():
         symbol = row["symbol"]
         try:
-            # First 5-minute candle (Opening Range) — only completed candles
+            # First 5-minute candle (Opening Range) - only completed candles
             candles_5m = get_today_candles(kite, symbol, interval="5minute", only_complete=True)
             if candles_5m.empty:
                 continue
@@ -61,7 +61,7 @@ def scan_candidates(
             # Don't chase if price ran too far above OR high
             chase_pct = (current_price - or_high) / or_high * 100
             if chase_pct > max_chase:
-                logger.debug(f"{symbol}: chasing {chase_pct:.2f}% above OR high — skipped")
+                logger.debug(f"{symbol}: chasing {chase_pct:.2f}% above OR high - skipped")
                 continue
 
             # Volume ratio: use daily avg volume for accurate surge detection

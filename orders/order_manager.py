@@ -22,7 +22,7 @@ def place_entry_order(
 
     if dry_run:
         oid = _dry_order_id()
-        logger.info(f"[DRY-RUN] BUY {qty} x {symbol} @ MARKET (entry~{price:.2f}) → {oid}")
+        logger.info(f"[DRY-RUN] BUY {qty} x {symbol} @ MARKET (entry~{price:.2f}) -> {oid}")
         return oid
 
     try:
@@ -35,7 +35,7 @@ def place_entry_order(
             product=kite.PRODUCT_MIS,
             order_type=kite.ORDER_TYPE_MARKET,
         )
-        logger.info(f"ENTRY ORDER placed: BUY {qty} x {symbol} → order_id={order_id}")
+        logger.info(f"ENTRY ORDER placed: BUY {qty} x {symbol} -> order_id={order_id}")
         return str(order_id)
     except Exception as e:
         logger.error(f"Failed to place entry order for {symbol}: {e}")
@@ -51,7 +51,7 @@ def place_sl_order(
 ) -> str | None:
     if dry_run:
         oid = _dry_order_id()
-        logger.info(f"[DRY-RUN] SL-Market SELL {qty} x {symbol} @ trigger {trigger_price:.2f} → {oid}")
+        logger.info(f"[DRY-RUN] SL-Market SELL {qty} x {symbol} @ trigger {trigger_price:.2f} -> {oid}")
         return oid
 
     try:
@@ -65,7 +65,7 @@ def place_sl_order(
             order_type=kite.ORDER_TYPE_SLM,
             trigger_price=trigger_price,
         )
-        logger.info(f"SL ORDER placed: SELL {qty} x {symbol} @ trigger {trigger_price:.2f} → {order_id}")
+        logger.info(f"SL ORDER placed: SELL {qty} x {symbol} @ trigger {trigger_price:.2f} -> {order_id}")
         return str(order_id)
     except Exception as e:
         logger.error(f"Failed to place SL order for {symbol}: {e}")
@@ -81,7 +81,7 @@ def place_target_order(
 ) -> str | None:
     if dry_run:
         oid = _dry_order_id()
-        logger.info(f"[DRY-RUN] TARGET LIMIT SELL {qty} x {symbol} @ {target_price:.2f} → {oid}")
+        logger.info(f"[DRY-RUN] TARGET LIMIT SELL {qty} x {symbol} @ {target_price:.2f} -> {oid}")
         return oid
 
     try:
@@ -95,7 +95,7 @@ def place_target_order(
             order_type=kite.ORDER_TYPE_LIMIT,
             price=target_price,
         )
-        logger.info(f"TARGET ORDER placed: SELL {qty} x {symbol} @ {target_price:.2f} → {order_id}")
+        logger.info(f"TARGET ORDER placed: SELL {qty} x {symbol} @ {target_price:.2f} -> {order_id}")
         return str(order_id)
     except Exception as e:
         logger.error(f"Failed to place target order for {symbol}: {e}")
@@ -111,7 +111,7 @@ def place_partial_target_order(
 ) -> str | None:
     """
     Place a LIMIT SELL for partial quantity at intermediate target.
-    Used for partial profit booking — sell 50% at 1×ATR, let rest run.
+    Used for partial profit booking - sell 50% at 1×ATR, let rest run.
     """
     if partial_qty <= 0:
         return None
@@ -120,7 +120,7 @@ def place_partial_target_order(
         oid = _dry_order_id()
         logger.info(
             f"[DRY-RUN] PARTIAL TARGET SELL {partial_qty} x {symbol} "
-            f"@ {partial_target:.2f} → {oid}"
+            f"@ {partial_target:.2f} -> {oid}"
         )
         return oid
 
@@ -137,7 +137,7 @@ def place_partial_target_order(
         )
         logger.info(
             f"PARTIAL TARGET ORDER placed: SELL {partial_qty} x {symbol} "
-            f"@ {partial_target:.2f} → {order_id}"
+            f"@ {partial_target:.2f} -> {order_id}"
         )
         return str(order_id)
     except Exception as e:
@@ -171,7 +171,7 @@ def modify_sl_order(
     dry_run: bool = True,
 ) -> bool:
     if order_id.startswith("DRY_") or dry_run:
-        logger.info(f"[DRY-RUN] Modify SL order {order_id} → trigger {new_trigger_price:.2f}")
+        logger.info(f"[DRY-RUN] Modify SL order {order_id} -> trigger {new_trigger_price:.2f}")
         return True
     try:
         kite.modify_order(
@@ -181,7 +181,7 @@ def modify_sl_order(
             order_type=kite.ORDER_TYPE_SLM,
             trigger_price=new_trigger_price,
         )
-        logger.info(f"Modified SL order {order_id} → new trigger {new_trigger_price:.2f}")
+        logger.info(f"Modified SL order {order_id} -> new trigger {new_trigger_price:.2f}")
         return True
     except Exception as e:
         logger.error(f"Failed to modify SL order {order_id}: {e}")
@@ -228,7 +228,7 @@ def place_market_sell(
 ) -> str | None:
     if dry_run:
         oid = _dry_order_id()
-        logger.info(f"[DRY-RUN] MARKET SELL {qty} x {symbol} → {oid}")
+        logger.info(f"[DRY-RUN] MARKET SELL {qty} x {symbol} -> {oid}")
         return oid
     try:
         order_id = kite.place_order(
@@ -240,7 +240,7 @@ def place_market_sell(
             product=kite.PRODUCT_MIS,
             order_type=kite.ORDER_TYPE_MARKET,
         )
-        logger.info(f"MARKET SELL {qty} x {symbol} → {order_id}")
+        logger.info(f"MARKET SELL {qty} x {symbol} -> {order_id}")
         return str(order_id)
     except Exception as e:
         logger.error(f"Failed to market sell {symbol}: {e}")

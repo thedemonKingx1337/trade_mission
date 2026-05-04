@@ -23,7 +23,7 @@ def load_session() -> KiteConnect | None:
     try:
         data = json.loads(path.read_text())
         if data.get("date") != _today_ist():
-            logger.info("Stored session is from a previous day — need fresh login.")
+            logger.info("Stored session is from a previous day - need fresh login.")
             return None
         kite = KiteConnect(api_key=KITE_API_KEY)
         kite.set_access_token(data["access_token"])

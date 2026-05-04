@@ -1,5 +1,5 @@
 """
-Sector Correlation Filter — Trade Mission
+Sector Correlation Filter - Trade Mission
 
 Prevents the bot from buying multiple stocks in the same sector on the same day.
 If HDFCBANK is already open, this filter blocks ICICIBANK and SBIN signals.
@@ -50,7 +50,7 @@ SECTOR_MAP: dict[str, list[str]] = {
     ],
 }
 
-# Reverse lookup: symbol → sector
+# Reverse lookup: symbol -> sector
 _SYMBOL_TO_SECTOR: dict[str, str] = {}
 for _sector, _symbols in SECTOR_MAP.items():
     for _sym in _symbols:
@@ -94,7 +94,7 @@ def filter_correlated(
         current_count = sector_count.get(sector, 0)
         if sector != "unknown" and current_count >= max_per_sector:
             logger.info(
-                f"Correlation filter: {sym} blocked — sector '{sector}' "
+                f"Correlation filter: {sym} blocked - sector '{sector}' "
                 f"already has {current_count} open position(s)"
             )
             continue
@@ -106,7 +106,7 @@ def filter_correlated(
 
     if len(filtered) < len(signals):
         logger.info(
-            f"Correlation filter: {len(signals)} signals → {len(filtered)} "
+            f"Correlation filter: {len(signals)} signals -> {len(filtered)} "
             f"after sector dedup"
         )
 

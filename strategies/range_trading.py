@@ -30,7 +30,7 @@ def establish_range(kite: KiteConnect, symbol: str, config: dict) -> dict | None
 
     max_range_pct = config.get("max_range_pct", 1.5)
     if r_width / mid * 100 > max_range_pct:
-        return None  # range too wide — not a range day for this stock
+        return None  # range too wide - not a range day for this stock
 
     last_price = float(candles.iloc[-1]["close"])
     return {
@@ -50,7 +50,7 @@ def scan_candidates(
 ) -> list[dict]:
     max_vix = config.get("max_vix", RANGE_MAX_VIX)
     if current_vix > max_vix:
-        logger.info(f"VIX {current_vix:.1f} > {max_vix} — range trading suppressed")
+        logger.info(f"VIX {current_vix:.1f} > {max_vix} - range trading suppressed")
         return []
 
     # Only run range after the first 30 minutes have completed

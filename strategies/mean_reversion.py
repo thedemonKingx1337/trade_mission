@@ -24,7 +24,7 @@ def scan_candidates(
     max_vix       = config.get("max_vix",                  MEAN_REV_MAX_VIX)
 
     if current_vix > max_vix:
-        logger.info(f"VIX {current_vix:.1f} > {max_vix} — mean reversion suppressed")
+        logger.info(f"VIX {current_vix:.1f} > {max_vix} - mean reversion suppressed")
         return []
 
     candidates = []
@@ -41,14 +41,14 @@ def scan_candidates(
 
             enriched = compute_all(candles_15m)
 
-            # RSI check — guard against all-NaN series
+            # RSI check - guard against all-NaN series
             last_rsi = _safe_last(enriched.get("rsi_14", pd.Series(dtype=float)))
             if pd.isna(last_rsi) or last_rsi > rsi_threshold:
                 continue
 
             last_price = float(candles_15m.iloc[-1]["close"])
 
-            # EMA-50 support check — guard against insufficient history
+            # EMA-50 support check - guard against insufficient history
             ema50 = _safe_last(enriched.get("ema_50", pd.Series(dtype=float)))
             if pd.isna(ema50):
                 logger.debug(f"{symbol}: EMA-50 not available yet")
@@ -63,7 +63,7 @@ def scan_candidates(
                 logger.debug(f"{symbol}: no reversal candle")
                 continue
 
-            # ATR — guard against insufficient history
+            # ATR - guard against insufficient history
             atr14 = _safe_last(enriched.get("atr_14", pd.Series(dtype=float)))
             if pd.isna(atr14) or atr14 <= 0:
                 atr14 = last_price * 0.01  # fallback: 1% of price
@@ -137,7 +137,7 @@ def get_signals(
         qty = calculate_position_size(capital, c["entry_price"], c["stop_loss"], risk_pct)
         if qty <= 0:
             logger.warning(
-                f"{c['symbol']}: qty=0 — SL distance too wide for capital Rs{capital:.0f}"
+                f"{c['symbol']}: qty=0 - SL distance too wide for capital Rs{capital:.0f}"
             )
             continue
         c["quantity"] = qty
