@@ -44,7 +44,7 @@ class Trade(BaseModel):
     symbol: str = Field(description="NSE trading symbol e.g. RELIANCE")
     direction: str = Field(description="Always BUY - long-only bot.")
     entry_price: float = Field(description="Entry price in Rs. Use current market price or slightly above breakout level.")
-    stop_loss: float = Field(description="Stop-loss price. Must be below entry_price.")
+    stop_loss: float = Field(description="Stop-loss price. MUST be at least 0.5% below entry_price. Example: if entry=100, SL must be <= 99.50.")
     target_price: float = Field(description="Target price. Must give at least 1.5:1 reward-to-risk ratio.")
     atr14: float = Field(description="ATR(14) from daily candles. Used for trailing SL.")
     confidence: float = Field(description="Signal confidence 0.0 to 1.0.")
@@ -416,6 +416,11 @@ def get_trade_signals(
                 continue
             if sl >= entry:
                 logger.warning(f"Gemini trade {symbol} skipped - SL {sl} >= entry {entry}")
+                continue
+            # Enforce minimum SL distance of 0.3% to avoid SL=entry traps
+            sl_dist_pct = (entry - sl) / entry * 100
+            if sl_dist_pct < 0.3:
+                logger.warning(f"Gemini trade {symbol} skipped - SL too tight ({sl_dist_pct:.2f}% from entry). Min 0.3% required.")
                 continue
             if target <= entry:
                 logger.warning(f"Gemini trade {symbol} skipped - target {target} <= entry {entry}")
