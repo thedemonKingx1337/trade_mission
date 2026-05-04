@@ -159,16 +159,16 @@ def _check_partial_fill(
     trade_id: int,
     conn: sqlite3.Connection,
     dry_run: bool,
-) -> dict:
+) -> tuple[dict, float]:
     """
     Check if partial profit target order was filled.
     If filled: reduce tracked quantity, move SL to breakeven, log profit.
 
-    Returns updated trade dict.
+    Returns updated trade dict and the realized partial PNL.
     """
     partial_oid = trade.get("partial_target_order_id")
     if not partial_oid or trade.get("partial_booked"):
-        return trade
+        return trade, 0.0
 
     status = get_order_status(kite, partial_oid)
     if status == "COMPLETE":
@@ -182,9 +182,13 @@ def _check_partial_fill(
             f"P&L Rs{partial_pnl:+.2f}"
         )
 
+        from ledger.tracker import record_partial_profit
+        remaining = trade.get("remaining_qty", trade["quantity"])
+        record_partial_profit(conn, trade_id, partial_pnl, remaining)
+
         # Mark partial as booked
         trade["partial_booked"] = True
-        trade["quantity"] = trade.get("remaining_qty", trade["quantity"])
+        trade["quantity"] = remaining
 
         # Move SL to breakeven for remaining quantity
         entry = trade["entry_price"]
@@ -200,7 +204,9 @@ def _check_partial_fill(
             )
             trade["stop_loss"] = entry
 
-    return trade
+        return trade, partial_pnl
+
+    return trade, 0.0
 
 
 def run_monitor_cycle(
@@ -247,8 +253,10 @@ def run_monitor_cycle(
                 continue
 
         # Check partial profit fill
-        trade = _check_partial_fill(kite, trade, trade_id, conn, dry_run)
+        trade, partial_pnl_val = _check_partial_fill(kite, trade, trade_id, conn, dry_run)
         open_trades[trade_id] = trade
+        if partial_pnl_val != 0.0:
+            realized_pnl += partial_pnl_val
 
         unrealized = (current_price - trade["entry_price"]) * trade["quantity"]
         unrealized_pnl += unrealized

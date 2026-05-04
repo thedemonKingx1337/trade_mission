@@ -120,18 +120,25 @@ def record_trade_exit(
     status: str,
 ) -> float:
     row = conn.execute(
-        "SELECT direction, quantity, entry_price FROM trades WHERE id = ?", (trade_id,)
+        "SELECT direction, quantity, entry_price, pnl FROM trades WHERE id = ?", (trade_id,)
     ).fetchone()
     if not row:
         return 0.0
-    pnl = (exit_price - row["entry_price"]) * row["quantity"]
+        
+    # Calculate PNL for the remaining quantity
+    final_pnl = (exit_price - row["entry_price"]) * row["quantity"]
     if row["direction"] == "SELL":
-        pnl = -pnl
+        final_pnl = -final_pnl
+        
+    # Add any previously booked partial PNL
+    partial_pnl = float(row["pnl"]) if row["pnl"] is not None else 0.0
+    total_pnl = final_pnl + partial_pnl
+    
     conn.execute(
         "UPDATE trades SET exit_price=?,status=?,pnl=?,exit_time=? WHERE id=?",
-        (exit_price, status, pnl, _now_str(), trade_id),
+        (exit_price, status, total_pnl, _now_str(), trade_id),
     )
-    col = "win_trades" if pnl > 0 else "loss_trades"
+    col = "win_trades" if total_pnl > 0 else "loss_trades"
     trade_date = conn.execute(
         "SELECT trade_date FROM trades WHERE id=?", (trade_id,)
     ).fetchone()["trade_date"]
@@ -140,12 +147,26 @@ def record_trade_exit(
         (trade_date,),
     )
     conn.commit()
-    return pnl
+    return final_pnl  # Return only the delta for in-memory tracking
+
+def record_partial_profit(
+    conn: sqlite3.Connection,
+    trade_id: int,
+    partial_pnl: float,
+    remaining_qty: int,
+) -> None:
+    """Updates the DB to reflect a partial exit. Logs the PNL and reduces active quantity."""
+    conn.execute(
+        "UPDATE trades SET pnl = ?, quantity = ? WHERE id = ?",
+        (partial_pnl, remaining_qty, trade_id),
+    )
+    conn.commit()
 
 
 def update_daily_pnl(conn: sqlite3.Connection, trade_date: str) -> float:
+    # Removed `AND status != 'OPEN'` so we capture partial PNLs from open trades too
     row = conn.execute(
-        "SELECT COALESCE(SUM(pnl),0) as total FROM trades WHERE trade_date=? AND status != 'OPEN'",
+        "SELECT COALESCE(SUM(pnl),0) as total FROM trades WHERE trade_date=?",
         (trade_date,),
     ).fetchone()
     realized = row["total"]
