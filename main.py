@@ -145,7 +145,7 @@ def job_premarket():
     logger.info(f"Today's capital: Rs{_daily_capital:.2f}")
 
     try:
-        premarket = get_premarket_snapshot(_kite, get_base_universe())
+        premarket = get_premarket_snapshot(_kite)
         logger.info(f"Pre-market snapshot: {len(premarket)} stocks loaded.")
     except Exception as e:
         logger.warning(f"Pre-market snapshot failed (non-fatal): {e}")
@@ -160,7 +160,7 @@ def job_market_open():
 
     logger.info("=== MARKET OPEN: Filtering universe & selecting strategy ===")
     try:
-        _universe_df = filter_universe(_kite, get_base_universe())
+        _universe_df = filter_universe(_kite)
     except Exception as e:
         logger.error(f"Universe filter failed: {e}")
         return
@@ -584,6 +584,12 @@ def main():
 
     logger.info("Scheduler ready. Waiting for 9:00 AM IST…")
     logger.info("Press Ctrl+C at any time — EOD close will run automatically.")
+
+    # Catch-up logic for late starts
+    now_time = _now_ist().time()
+    if time(9, 0) <= now_time < time(9, 15):
+        logger.warning("Bot started between 9:00 and 9:15 AM. Running premarket catch-up instantly...")
+        job_premarket()
 
     try:
         while True:
