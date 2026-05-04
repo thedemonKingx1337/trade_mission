@@ -47,7 +47,7 @@ class Trade(BaseModel):
     stop_loss: float = Field(description="Stop-loss price. Must be below entry_price.")
     target_price: float = Field(description="Target price. Must give at least 1.5:1 reward-to-risk ratio.")
     atr14: float = Field(description="ATR(14) from daily candles. Used for trailing SL.")
-    confidence: float = Field(default=0.8, description="Signal confidence 0.0 to 1.0.")
+    confidence: float = Field(description="Signal confidence 0.0 to 1.0.")
     rationale: str = Field(description="Why this trade — specific data points that support it.")
 
 class TradeDecisions(BaseModel):
@@ -58,7 +58,7 @@ class TradeDecisions(BaseModel):
 class PositionAction(BaseModel):
     trade_id: int = Field(description="The trade_id integer from the position snapshot.")
     action: str = Field(description="'hold', 'exit_now', 'tighten_sl', or 'trail_sl'")
-    new_sl: float | None = Field(default=None, description="Required for tighten_sl and trail_sl. New stop-loss price.")
+    new_sl: float | None = Field(description="Required for tighten_sl and trail_sl. New stop-loss price.")
     reason: str = Field(description="Brief reason for this action.")
 
 class PositionAdvice(BaseModel):

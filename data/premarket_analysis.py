@@ -329,7 +329,7 @@ def get_premarket_context(
     logger.info(
         f"Pre-market: Gift Nifty={gift['bias']}({gift['change_pct']:+.2f}%), "
         f"PCR={pcr:.2f}, sectors={sector_summary}, "
-        f"bias_score={bias_score:+.2f} → {market_bias.upper()}"
+        f"bias_score={bias_score:+.2f} -> {market_bias.upper()}"
     )
 
     return {
